@@ -7,14 +7,14 @@
 #define RFM95_INT 7
 #define RF95_FREQ 915.0
 
-#define LED 13
+#define LED 5
 
-// int inputValue = 0;//variable to store the value coming from sensor
 uint8_t outputValue = 0;//variable to store the output value
-char int_packet[3]; //2 for int bytes and one for end of string thingy '/0'.
 // Previous value of the pot. Used to look for a change in pot as 
 // times when to print to serial.
-// int previous_value = -999; 
+
+uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t len = sizeof(buf);
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -50,21 +50,14 @@ void setup() {
 void loop() {
   if (rf95.available())
   {
-    // Should be a message for us now
-    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-    
+    // Should be a message for us now    
     if (rf95.recv(buf, &len))
     {
-      //Serial.println((char *) buf);
-      //val = (int)buf;
-      //Serial.println((int*) val);
-      //val = buf;
-      value = buf[0];
-      Serial.println((int *) value);
+      RH_RF95::printBuffer("\nReceived (for diagnostic use): ", buf, len);
+      Serial.println(*buf, DEC);
       Serial.print("RSSI: ");
       Serial.println(rf95.lastRssi(), DEC);
-      analogWrite(LED, buf);
+      analogWrite(LED, buf[0]);
     }
   }
 }

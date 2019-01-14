@@ -64,7 +64,7 @@ void loop() {
     //turn the led on depend on the output value
     analogWrite(LED,outputValue);
 
-    // Send output value over radio
+    // Send output value over radio 
     rf95.send(&outputValue, sizeof(outputValue));
     rf95.waitPacketSent();
   }  

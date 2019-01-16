@@ -22,13 +22,16 @@ else:
 start_time = time.time()
 
 # Open test file to send
-with open(args.file, 'r') as f:
-    for line in f: # Send file line-by-line
-        # A Python3 thing. We need to send a byes array.
-        ser.write(line.encode()) 
-        print('Sent', line.rstrip())
-        # Lag between sending lines to allow the radio to 
-        # fully recieve the message.
-        time.sleep(0.1) 
-
-print('Time to send file {}'.format(time.time() - start_time))
+line_n = 0
+try:
+    with open(args.file, 'r') as f:
+        for line in f: # Send file line-by-line
+            # A Python3 thing. We need to send a byes array.
+            ser.write(line.encode()) 
+            print('Sent', line.rstrip())
+            line_n += 1
+            # Lag between sending lines to allow the radio to 
+            # fully recieve the message.
+            time.sleep(0.1) 
+finally:
+    print('Sent {} lines for {} s'.format(line_n, time.time() - start_time))

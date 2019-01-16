@@ -11,7 +11,7 @@
 // Blinky on sent
 #define LED 13
 
-char serial_data[RH_RF95_MAX_MESSAGE_LEN];
+char buf[RH_RF95_MAX_MESSAGE_LEN];
 uint8_t i;
 
 // Singleton instance of the radio driver
@@ -33,46 +33,48 @@ void setup() {
     while (1);
   }
 
-  // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
   if (!rf95.setFrequency(RF95_FREQ)) {
     Serial.println("setFrequency failed");
     while (1);
   }
-
-  rf95.setTxPower(23, false);
+  // Set output power. For feather valid values between 5 and 23
+  rf95.setTxPower(5, false);
   
   Serial.begin(9600);
 }
 
+// For reference, RH_RF95_MAX_MESSAGE_LEN = 251 bytes.
 void loop() {
-  ////// TRANSMITTER CODE //////
-  // Listen to the serial port and if data shows up, send it to radio.
-  // May be a better way to simplify the if-while nested code.
+  //////////////////////////////
+  ///////// TRANSMITTER  ///////
+  //////////////////////////////
+  // Listen to the serial port and if data shows up, send it to radio.  
   if(Serial.available() > 0)
-  { 
-    // clear serial_data char array.
-    memset(serial_data, 0, RH_RF95_MAX_MESSAGE_LEN);
+  {     
+    // clear buf char array.
+    memset(buf, 0, RH_RF95_MAX_MESSAGE_LEN);
     
     i = 0; // Counter to calculate the length of the transmission.
-    // While serial data is avaliable, add bytes to serial_data.
+    // While serial data is avaliable, add bytes to the buffer.
     while (Serial.available() > 0) 
     {  
-      serial_data[i] = char(Serial.read());
+      buf[i] = char(Serial.read());
       i++;
       //delay(2);
     }
     Serial.print("Sending data: ");
-    Serial.print(serial_data);
-    // Send data over radio
-    rf95.send((char *) serial_data, i);
-    //rf95.send(&serial_data, i);
-    rf95.waitPacketSent();
+    Serial.print(buf);
+    rf95.send((char *) buf, i); // Send data over radio
+    rf95.waitPacketSent(); // Wait to finish transmission
   }
-
+  
+  //////////////////////////////
+  ////////// RECIEVER  /////////
+  //////////////////////////////
   // Listen to the radio and if data is recieved, send it to serial.
   if (rf95.available())
   {
-    char buf[RH_RF95_MAX_MESSAGE_LEN]; // length is 251 bytes.
+    //char buf[RH_RF95_MAX_MESSAGE_LEN];
     memset(buf, 0, RH_RF95_MAX_MESSAGE_LEN);
     uint8_t len = sizeof(buf);
     // Should be a message for us now    
@@ -85,8 +87,8 @@ void loop() {
         Serial.print(buf[i]);
       }
       
-      Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);
+      //Serial.print("RSSI: ");
+      //Serial.println(rf95.lastRssi(), DEC);
     }
   }
 }

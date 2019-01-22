@@ -24,6 +24,6 @@ with open('test_file.txt', 'w') as f:
         line = ser.readline().decode()
         print(line.rstrip())
         # Write the data to file.
-        if 'Recieved' in line: 
+        if 'got request from' in line: 
             f.write(line)
 

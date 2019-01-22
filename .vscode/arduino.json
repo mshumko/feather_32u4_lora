@@ -1,0 +1,6 @@
+{
+    "programmer": "AVRISP mkII",
+    "board": "adafruit:avr:feather32u4",
+    "port": "/dev/ttyACM1",
+    "sketch": "reliable_datagrams/LoRa_RX/LoRa_RX.ino"
+}

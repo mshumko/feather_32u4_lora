@@ -27,6 +27,7 @@ RHReliableDatagram rf95_manager(rf95, SERVER_ADDRESS);
 
 // Global variables. BAD!
 uint8_t data[] = "And hello back to you";
+//char data[] = {'00 AA BB CC DD EE FF'};
 uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
 
 void setup()

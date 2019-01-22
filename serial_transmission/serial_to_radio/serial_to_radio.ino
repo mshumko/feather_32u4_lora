@@ -10,6 +10,7 @@
 #define RF95_FREQ 915.0
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
+#define MAX_RETRIES 10
 
 // Blinky on sent
 #define LED 13
@@ -23,7 +24,7 @@ uint8_t from;
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 RHReliableDatagram rf95_manager(rf95, SERVER_ADDRESS);
 
-uint8_t data[] = "Got it!";
+uint8_t data[] = "Message recieved";
 
 void setup() {
   // put your setup code here, to run once:
@@ -47,6 +48,8 @@ void setup() {
   }
   // Set output power. For feather valid values between 5 and 23
   rf95.setTxPower(5, false);
+
+  rf95_managersetRetries(MAX_RETRIES)
   
   Serial.begin(9600);
 }
@@ -114,18 +117,12 @@ void loop() {
       Serial.print("got request from : 0x");
       Serial.print(from, HEX);
       Serial.print(": ");
-//      Serial.println((char*)buf);
       
       //Serial.print("Recieved: ");
       for(int i = 0; i < len; i++) Serial.print(buf[i]);
-      //{
-        
-      //}
       
       //Serial.print("RSSI: ");
       //Serial.println(rf95.lastRssi(), DEC);
-      Serial.print("Sending: ");
-      Serial.println((char*)data);
       if (!rf95_manager.sendtoWait(data, sizeof(data), from))
         Serial.println("sendtoWait failed");
     }

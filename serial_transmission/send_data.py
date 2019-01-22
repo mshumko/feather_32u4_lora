@@ -36,15 +36,13 @@ if args.string is None:
                 line_n += 1
                 wait_start_time = time.time()
                 while 1:
-                    if ser.in_waiting:  # Or: while ser.inWaiting():
+                    if ser.in_waiting:
                         #print(ser.readline().decode())
-                        if 'Got it!' in ser.readline().decode():
-                            print('Recieved', ser.readline().decode())
-                        break
+                        ack_line = ser.readline().decode()
+                        if 'Message recieved' in ack_line:
+                            #print('Recieved', ack_line)
+                            break
 
-                    # if 'Got it!' in ser.readline().decode():
-                    #     print('Recieved', ser.readline().decode())
-                    #     break
                     # Break if no response heard after a timeout.
                     if time.time() - wait_start_time > args.timeout:
                         print('No response heard.')

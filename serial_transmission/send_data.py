@@ -26,14 +26,13 @@ if args.string is None:
     start_time = time.time()
 
     # Open test file to send
-    line_n = 0
+    lines_sent = 0
     try:
         with open(args.file, 'r') as f:
             for line in f: # Send file line-by-line
                 # A Python3 thing. We need to send a byes array.
                 print('Sending', line.rstrip().encode())
                 ser.write(line.encode()) 
-                line_n += 1
                 wait_start_time = time.time()
                 while 1:
                     if ser.in_waiting:
@@ -41,6 +40,7 @@ if args.string is None:
                         ack_line = ser.readline().decode()
                         if 'Message recieved' in ack_line:
                             #print('Recieved', ack_line)
+                            lines_sent += 1
                             break
 
                     # Break if no response heard after a timeout.
@@ -50,7 +50,8 @@ if args.string is None:
 
 
     finally:
-        print('Sent {} lines for {} s'.format(line_n, time.time() - start_time))
+        dt = time.time() - start_time
+        print('\n\nSent {} lines for {} s ({} lines/s)\n\n'.format(lines_sent, dt, lines_sent/dt))
 else:
     #time.sleep(0.5) 
     print("Sending", args.string.encode())

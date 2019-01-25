@@ -113,6 +113,7 @@ void loop() {
     // Should be a message for us now    
     if (rf95_manager.recvfromAck(buf, &len, &from))
     {
+      digitalWrite(LED, HIGH);
       //RH_RF95::printBuffer("\nReceived (for diagnostic use): ", buf, len);
 //      Serial.print("got request from : 0x");
 //      Serial.print(from, HEX);
@@ -127,4 +128,5 @@ void loop() {
         Serial.println("sendtoWait failed");
     }
   }
+  digitalWrite(LED, LOW);
 }

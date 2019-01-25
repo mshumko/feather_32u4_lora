@@ -3,6 +3,7 @@ import glob
 import serial
 import time
 import argparse
+from functools import partial
 
 parser = argparse.ArgumentParser(description='Transmitts data to a '
                             'ttyACM# port to an Arduino.')
@@ -29,17 +30,30 @@ if args.string is None:
     lines_sent = 0
     try:
         with open(args.file, 'r') as f:
-            for line in f: # Send file line-by-line
+            #for line in f: # Send file line-by-line
+            for block in iter(partial(f.read, 251), ''):
                 # A Python3 thing. We need to send a byes array.
-                print('Sending', line.rstrip().encode())
-                ser.write(line.encode()) 
+                # print('Sending', line.rstrip().encode())
+                # ser.write(line.encode()) 
+                # wait_start_time = time.time()
+                # while 1:
+                #     if ser.in_waiting:
+                #         #print(ser.readline().decode())
+                #         ack_line = ser.readline().decode()
+                #         if 'Message recieved' in ack_line:
+                #             #print('Recieved', ack_line)
+                #             lines_sent += 1
+                #             break
+
+                print('Sending', block.rstrip().encode())
+                ser.write(block.encode()) 
                 wait_start_time = time.time()
                 while 1:
                     if ser.in_waiting:
                         #print(ser.readline().decode())
                         ack_line = ser.readline().decode()
                         if 'Message recieved' in ack_line:
-                            #print('Recieved', ack_line)
+                            print('Recieved', ack_line)
                             lines_sent += 1
                             break
 

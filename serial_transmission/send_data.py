@@ -22,51 +22,63 @@ if args.port is None:
 else:
     ser = serial.Serial('/dev/ttyACM{}'.format(args.port), 9600)
 
+BLOCK_SIZE = 251 # bytes (max allowed by the Radiohead FM95 radio driver)
+
+if 'zip' in args.file:
+    BINARY_MODE = True
+    fileReadMode = 'rb'
+    iterSentinel = b''
+else:
+    BINARY_MODE = False
+    fileReadMode = 'r'
+    iterSentinel = ''
+
+def send_block(block, blocks_sent):
+    print('Sending', block.rstrip())
+    ser.write(block) 
+    wait_start_time = time.time()
+    while 1:
+        if ser.in_waiting:
+            ack_line = ser.readline().decode()
+            if 'Message recieved' in ack_line:
+                print(ack_line)
+                blocks_sent += 1
+                break
+
+        # Break if no response heard after a timeout.
+        if time.time() - wait_start_time > args.timeout:
+            print('No response heard.')
+            break
+    return blocks_sent
+
 if args.string is None:
     # If user did not supply a string to send, send a test file.
     start_time = time.time()
 
     # Open test file to send
-    lines_sent = 0
+    blocks_sent = 0
     try:
-        with open(args.file, 'r') as f:
-            #for line in f: # Send file line-by-line
-            for block in iter(partial(f.read, 251), ''):
-                # A Python3 thing. We need to send a byes array.
-                # print('Sending', line.rstrip().encode())
-                # ser.write(line.encode()) 
-                # wait_start_time = time.time()
-                # while 1:
-                #     if ser.in_waiting:
-                #         #print(ser.readline().decode())
-                #         ack_line = ser.readline().decode()
-                #         if 'Message recieved' in ack_line:
-                #             #print('Recieved', ack_line)
-                #             lines_sent += 1
-                #             break
-
-                print('Sending', block.rstrip().encode())
-                ser.write(block.encode()) 
-                wait_start_time = time.time()
-                while 1:
-                    if ser.in_waiting:
-                        #print(ser.readline().decode())
-                        ack_line = ser.readline().decode()
-                        if 'Message recieved' in ack_line:
-                            print('Recieved', ack_line)
-                            lines_sent += 1
-                            break
-
-                    # Break if no response heard after a timeout.
-                    if time.time() - wait_start_time > args.timeout:
-                        print('No response heard.')
-                        break
-
+        with open(args.file, fileReadMode) as f:
+            # This block for loop is where the magic happens. 
+            # iter(...) returns an iterable object that is
+            # f.read(BLOCK_SIZE) in this case. BLOCK_SIZE is 
+            # the number of
+            # bytes in each block. The loop will go on until
+            # the sentinel ('' arg of iter) is found at which
+            # point StopIteration exception is raised and the
+            # loop halts. 
+            for block in iter(partial(f.read, BLOCK_SIZE), iterSentinel):
+                if BINARY_MODE:
+                    blocks_sent = send_block(block, blocks_sent)
+                else:
+                    # encode() is a Python3 thing. We need to 
+                    # send a byes array.
+                    blocks_sent = send_block(block.encode(), blocks_sent)
 
     finally:
         dt = time.time() - start_time
-        print('\n\nSent {} lines for {} s ({} lines/s)\n\n'.format(lines_sent, dt, lines_sent/dt))
+        print('\n\nSent {} blocks for {} s ({} bytes/s)\n\n'.format(
+                    blocks_sent, dt, BLOCK_SIZE*blocks_sent/dt))
 else:
-    #time.sleep(0.5) 
     print("Sending", args.string.encode())
     ser.write(args.string.rstrip().encode())

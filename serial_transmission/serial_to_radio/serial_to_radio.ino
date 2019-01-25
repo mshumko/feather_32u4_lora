@@ -24,7 +24,7 @@ uint8_t from;
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 RHReliableDatagram rf95_manager(rf95, SERVER_ADDRESS);
 
-uint8_t data[] = "Message recieved";
+uint8_t data[] = "Message recieved\n";
 
 void setup() {
   // put your setup code here, to run once:
@@ -49,7 +49,7 @@ void setup() {
   // Set output power. For feather valid values between 5 and 23
   rf95.setTxPower(5, false);
 
-  rf95_managersetRetries(MAX_RETRIES)
+  rf95_manager.setRetries(MAX_RETRIES);
   
   Serial.begin(9600);
 }
@@ -73,8 +73,8 @@ void loop() {
       i++;
       //delay(2);
     }
-    Serial.print("Sending data: ");
-    Serial.print(buf);
+//    Serial.print("Sending data: ");
+//    Serial.print(buf);
 
     if (rf95_manager.sendtoWait(buf, i, SERVER_ADDRESS))
     {
@@ -84,9 +84,9 @@ void loop() {
       if (rf95_manager.recvfromAckTimeout(buf, &len, 2000, &from))
       {
         digitalWrite(LED, HIGH);
-        Serial.print("got reply from : 0x");
-        Serial.print(from, HEX);
-        Serial.print(": ");
+//        Serial.print("got reply from : 0x");
+//        Serial.print(from, HEX);
+//        Serial.print(": ");
         Serial.println((char*)buf);
       }
       else
@@ -114,9 +114,9 @@ void loop() {
     if (rf95_manager.recvfromAck(buf, &len, &from))
     {
       //RH_RF95::printBuffer("\nReceived (for diagnostic use): ", buf, len);
-      Serial.print("got request from : 0x");
-      Serial.print(from, HEX);
-      Serial.print(": ");
+//      Serial.print("got request from : 0x");
+//      Serial.print(from, HEX);
+//      Serial.print(": ");
       
       //Serial.print("Recieved: ");
       for(int i = 0; i < len; i++) Serial.print(buf[i]);

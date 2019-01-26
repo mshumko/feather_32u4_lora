@@ -12,6 +12,19 @@
 #define SERVER_ADDRESS 2
 #define MAX_RETRIES 10
 
+/*Modem config options
+To access these enumerators, use a RH_RF95 scope resolution
+Bw125Cr45Sf128:   Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on. 
+                  Default medium range.
+Bw500Cr45Sf128:   Bw = 500 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on. 
+                  Fast+short range.
+Bw31_25Cr48Sf512: Bw = 31.25 kHz, Cr = 4/8, Sf = 512chips/symbol, CRC on. 
+                  Slow+long range.
+Bw125Cr48Sf4096:  Bw = 125 kHz, Cr = 4/8, Sf = 4096chips/symbol, CRC on. 
+                  Slow+long range
+*/
+#define MODEM_CONFIG RH_RF95::Bw500Cr45Sf128 
+
 // Blinky on sent
 #define LED 13
 
@@ -50,6 +63,8 @@ void setup() {
   rf95.setTxPower(5, false);
 
   rf95_manager.setRetries(MAX_RETRIES);
+  
+  rf95.setModemConfig(MODEM_CONFIG);
   
   Serial.begin(9600);
 }

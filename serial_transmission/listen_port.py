@@ -10,13 +10,15 @@ parser.add_argument('-b', '--binary_mode', default=False,
         help='Wether the incoming data in binary format e.g. zip files.')
 args = parser.parse_args()
 
+BAUD_RATE = 9600
+
 # Figure out which port to use and initialize the driver.
 if args.port is None:
     ports = glob.glob('/dev/ttyACM*')
     assert len(ports) == 1, "No unique Arduino port!\n{}".format(ports)
-    ser = serial.Serial(ports[0], 9600)
+    ser = serial.Serial(ports[0], BAUD_RATE)
 else:
-    ser = serial.Serial('/dev/ttyACM{}'.format(args.port), 9600)
+    ser = serial.Serial('/dev/ttyACM{}'.format(args.port), BAUD_RATE)
 
 if args.binary_mode:
     openFileMode = 'wb'

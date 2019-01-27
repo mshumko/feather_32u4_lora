@@ -16,16 +16,21 @@ parser.add_argument('-r', '--retry', help='Number of seconds before we retry to 
 args = parser.parse_args()
 
 N_RETRIES = 5
+### BLOCK_SIZE considerations ###
+# 251 bytes is the Radiohead FM95 radio driver max buffer size.
+# 64 bytes is theArduino serial max serial buffer size. 
+# There is a way around the serial buffer, but it is a pain e.g. 
+# http://www.hobbytronics.co.uk/arduino-serial-buffer-size)
+BLOCK_SIZE = 251 
+BAUD_RATE = 9600 
 
 # Figure out which port to use and initialize the driver.
 if args.port is None:
     ports = glob.glob('/dev/ttyACM*')
     assert len(ports) == 1, "No unique Arduino port!\n{}".format(ports)
-    ser = serial.Serial(ports[0], 9600)
+    ser = serial.Serial(ports[0], BAUD_RATE)
 else:
-    ser = serial.Serial('/dev/ttyACM{}'.format(args.port), 9600)
-
-BLOCK_SIZE = 251 # bytes (max allowed by the Radiohead FM95 radio driver)
+    ser = serial.Serial('/dev/ttyACM{}'.format(args.port), BAUD_RATE)
 
 if 'zip' in args.file:
     BINARY_MODE = True
@@ -80,6 +85,9 @@ if args.string is None:
             # point StopIteration exception is raised and the
             # loop halts. 
             for block in iter(partial(f.read, BLOCK_SIZE), iterSentinel):
+                # Remove extra carrage return chars that are at the end 
+                # of each LAFTR GPGGA lines.
+                block = block.replace('\n\n', '\n') 
                 if BINARY_MODE:
                     blocks_sent = send_block(block, blocks_sent)
                 else:
@@ -88,9 +96,9 @@ if args.string is None:
                     blocks_sent = send_block(block.encode(), blocks_sent)
 
     finally:
-        dt = time.time() - start_time
-        print('\n\nSent {} blocks for {} s ({} bytes/s)\n\n'.format(
-                    blocks_sent, dt, BLOCK_SIZE*blocks_sent/dt))
+        dt = (time.time() - start_time)
+        print('\n\nSent {} blocks for {} minutes ({} bytes/s)\n\n'.format(
+                    blocks_sent, dt//60, BLOCK_SIZE*blocks_sent//dt))
 else:
     print("Sending", args.string.encode())
     ser.write(args.string.rstrip().encode())

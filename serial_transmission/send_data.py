@@ -98,7 +98,7 @@ if args.string is None:
                     # send a byes array.
                     blocks_sent = send_block(block.encode(), blocks_sent)
 
-            send_block(b'END', commands_sent)
+            send_block('END'.encode(), commands_sent)
 
     finally:
         dt = (time.time() - start_time)

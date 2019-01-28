@@ -34,7 +34,8 @@ with open('test_file.txt', openFileMode) as f:
             line = ser.readline()
         else:
             line = ser.readline().decode()
-        if 'END' in line:
-            break
+
         print('Recieved:\n', line)
         f.write(line)
+        if 'END' in line:
+            break

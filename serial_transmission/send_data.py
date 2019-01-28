@@ -74,6 +74,8 @@ if args.string is None:
 
     # Open test file to send
     blocks_sent = 0
+    commands_sent = 0
+
     try:
         with open(args.file, fileReadMode) as f:
             # This block for loop is where the magic happens. 
@@ -95,6 +97,8 @@ if args.string is None:
                     # encode() is a Python3 thing. We need to 
                     # send a byes array.
                     blocks_sent = send_block(block.encode(), blocks_sent)
+
+            send_block(b'END', commands_sent)
 
     finally:
         dt = (time.time() - start_time)

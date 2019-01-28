@@ -94,6 +94,8 @@ void serial2radio()
   {     
     // clear buf char array.
     memset(buf, 0, RH_RF95_MAX_MESSAGE_LEN);
+    // Start counter to turn off LED after led_timeout
+    start_time = millis();
     
     i = 0; // Counter to calculate the length of the transmission.
     // While serial data is avaliable, add bytes to the buffer.
@@ -162,6 +164,10 @@ void radio2serial()
         Serial.println("sendtoWait failed");
     }
   }
+  
   // Turn off LED if no transmission heard in timeout
-  if (millis() - start_time > 1000000*led_timeout) {digitalWrite(LED, LOW);}
+  if (millis() - start_time > 1000*led_timeout) 
+  {
+    digitalWrite(LED, LOW);
+  }
 }

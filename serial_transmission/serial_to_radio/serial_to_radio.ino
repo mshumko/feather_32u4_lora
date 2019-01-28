@@ -2,14 +2,18 @@
 #include <RH_RF95.h>
 #include <RHReliableDatagram.h>
 
-/* for feather32u4*/ 
+// Configure feather32u4 pins to talk to LoRa and blink LED
 #define RFM95_CS 8
 #define RFM95_RST 4
 #define RFM95_INT 7
+#define LED 13
 
+//////////////////////////////
+//////// RADIO CONFIG  ///////
+//////////////////////////////
 #define RF95_FREQ 915.0
-#define CLIENT_ADDRESS 1
-#define SERVER_ADDRESS 2
+#define CLIENT_ADDRESS NULL //1
+#define SERVER_ADDRESS NULL //2
 #define MAX_RETRIES 10
 
 /*Modem config options
@@ -25,19 +29,26 @@ Bw125Cr48Sf4096:  Bw = 125 kHz, Cr = 4/8, Sf = 4096chips/symbol, CRC on.
 */
 #define MODEM_CONFIG RH_RF95::Bw500Cr45Sf128 
 
-// Blinky on sent
-#define LED 13
 
-char buf[RH_RF95_MAX_MESSAGE_LEN];
+char buf[RH_RF95_MAX_MESSAGE_LEN]; // RH_RF95_MAX_MESSAGE_LEN = 251 bytes.
 uint8_t i;
 uint8_t len = sizeof(buf);
 uint8_t from;
 
-// Singleton instance of the radio driver
+const bool verbose = false;
+unsigned long start_time;
+const uint8_t led_timeout = 5; // Seconds
+const uint8_t radio_timeout = 2; // Seconds
+
+// Function prototypes.
+void serial2radio();
+void radio2serial();
+
+// Instance of the radio driver and manager
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 RHReliableDatagram rf95_manager(rf95, SERVER_ADDRESS);
 
-uint8_t data[] = "Message recieved\n";
+uint8_t ack[] = "Message recieved\n";
 
 void setup() {
   // put your setup code here, to run once:
@@ -63,14 +74,18 @@ void setup() {
   rf95.setTxPower(5, false);
 
   rf95_manager.setRetries(MAX_RETRIES);
-  
   rf95.setModemConfig(MODEM_CONFIG);
   
   Serial.begin(9600);
 }
 
-// For reference, RH_RF95_MAX_MESSAGE_LEN = 251 bytes.
 void loop() {
+  serial2radio();
+  radio2serial();
+}
+
+void serial2radio() 
+{
   //////////////////////////////
   ///////// TRANSMITTER  ///////
   //////////////////////////////
@@ -86,62 +101,67 @@ void loop() {
     {  
       buf[i] = char(Serial.read());
       i++;
-      //delay(2);
     }
-//    Serial.print("Sending data: ");
-//    Serial.print(buf);
 
+    if (verbose)
+    {
+      Serial.print("Sending data: ");
+      Serial.print(buf);
+    }
+
+    // Send data and wait for an acknowledgement message.
     if (rf95_manager.sendtoWait(buf, i, SERVER_ADDRESS))
     {
       // Now wait for a reply from the server
       uint8_t len = sizeof(buf);
       uint8_t from;   
-      if (rf95_manager.recvfromAckTimeout(buf, &len, 2000, &from))
+      // If reply was heard.
+      if (rf95_manager.recvfromAckTimeout(buf, &len, 1000*radio_timeout, &from))
       {
         digitalWrite(LED, HIGH);
-//        Serial.print("got reply from : 0x");
-//        Serial.print(from, HEX);
-//        Serial.print(": ");
         Serial.println((char*)buf);
+
+        if (verbose)
+        {
+          Serial.print("got reply from : 0x");
+          Serial.print(from, HEX);
+          Serial.print(": ");
+        } 
+
       }
-      else
-      {
-        Serial.println("No reply, is rf95_reliable_datagram_server running?");
-      }
+      else {Serial.println("No reply, is the other unit running?");}
     }
-    else
-      Serial.println("sendtoWait failed");
-    
-    //rf95.send((char *) buf, i); // Send data over radio
-    //rf95.waitPacketSent(); // Wait to finish transmission
+    else {Serial.println("sendtoWait failed");}
   }
-  
+}
+
+void radio2serial() 
+{
   //////////////////////////////
   ////////// RECIEVER  /////////
   //////////////////////////////
   // Listen to the radio and if data is recieved, send it to serial.
   if (rf95_manager.available())
   {
-    //char buf[RH_RF95_MAX_MESSAGE_LEN];
+    start_time = millis();
     memset(buf, 0, RH_RF95_MAX_MESSAGE_LEN);
-    uint8_t len = sizeof(buf);
     // Should be a message for us now    
     if (rf95_manager.recvfromAck(buf, &len, &from))
     {
-      digitalWrite(LED, HIGH);
-      //RH_RF95::printBuffer("\nReceived (for diagnostic use): ", buf, len);
-//      Serial.print("got request from : 0x");
-//      Serial.print(from, HEX);
-//      Serial.print(": ");
-      
-      //Serial.print("Recieved: ");
-      for(int i = 0; i < len; i++) Serial.print(buf[i]);
-      
-      //Serial.print("RSSI: ");
-      //Serial.println(rf95.lastRssi(), DEC);
-      if (!rf95_manager.sendtoWait(data, sizeof(data), from))
+      digitalWrite(LED, HIGH);      
+      for(int i = 0; i < len; i++) {Serial.print(buf[i]);}
+
+      if (verbose) 
+      {
+        Serial.print("RSSI: ");
+        Serial.println(rf95.lastRssi(), DEC);
+      }
+
+      // Try to send an recieve acknowledgement message.
+      if (!rf95_manager.sendtoWait(ack, sizeof(ack), from))
         Serial.println("sendtoWait failed");
     }
   }
-  digitalWrite(LED, LOW);
+  // Turn off LED if no transmission heard in timeout
+  if (millis() - start_time > 1000000*led_timeout) {digitalWrite(LED, LOW);}
 }

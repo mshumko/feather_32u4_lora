@@ -87,6 +87,7 @@ if args.string is None:
             for block in iter(partial(f.read, BLOCK_SIZE), iterSentinel):
                 # Remove extra carrage return chars that are at the end 
                 # of each LAFTR GPGGA lines.
+                #print(repr(block))
                 block = block.replace('\n\n', '\n') 
                 if BINARY_MODE:
                     blocks_sent = send_block(block, blocks_sent)

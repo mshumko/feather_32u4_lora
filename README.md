@@ -1,6 +1,6 @@
 # feather_32u4_LoRa
 
-Small projects to explore how to program the Feather 32u4 and the LoRa RF95  radio. The main program that sends data bidirectionally from a computer to the radio is in """serial_transmission/serial_to_radio/""" 
+Small projects to explore how to program the Feather 32u4 and the LoRa RF95  radio. The main program that sends data bidirectionally from a computer to the radio is in `serial_transmission/serial_to_radio/` 
 
 A few useful references for the radio are
 *   <a href="https://www.airspayce.com/mikem/arduino/RadioHead/">RadioHead Arduino</a>
